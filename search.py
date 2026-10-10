@@ -72,55 +72,69 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
-def depthFirstSearch(problem: SearchProblem):
+def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first.
-
-    Your search algorithm needs to return a list of actions that reaches the
-    goal. Make sure to implement a graph search algorithm.
+    Graph search version: tracks visited nodes so states aren't expanded twice.
     """
-    # Fringe uses LIFO Stack for Depth-First Search
+    # 1. A LIFO Stack holds our search nodes (State, Actions List)
     fringe = util.Stack()
+    
+    # 2. Push the start state with an empty list of actions
     start_state = problem.getStartState()
     fringe.push((start_state, []))
     
+    # 3. Track visited states so we never expand the same state twice
     visited = set()
-
+    
+    # 4. Explore until the fringe is empty
     while not fringe.isEmpty():
         state, actions = fringe.pop()
-
+        
+        # If this state is the goal, return the sequence of actions to reach it
         if problem.isGoalState(state):
             return actions
-
+        
+        # Expand the state only if we haven't visited it yet
         if state not in visited:
             visited.add(state)
-            for next_state, action, step_cost in problem.getSuccessors(state):
+            
+            # Look at all possible moves from this state
+            for next_state, action, cost in problem.getSuccessors(state):
                 if next_state not in visited:
+                    # Push child state along with the extended action history
                     fringe.push((next_state, actions + [action]))
-
+                    
+    # Return empty list if no path is found
     return []
 
-def breadthFirstSearch(problem: SearchProblem):
+def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
-    # Fringe uses FIFO Queue for Breadth-First Search
+    # 1. A FIFO Queue holds search nodes (state, actions)
     fringe = util.Queue()
+    
+    # 2. Push start state with an empty path
     start_state = problem.getStartState()
     fringe.push((start_state, []))
     
+    # 3. Track visited states
     visited = set()
-
+    
+    # 4. Explore until fringe is empty
     while not fringe.isEmpty():
         state, actions = fringe.pop()
-
+        
+        # Goal check
         if problem.isGoalState(state):
             return actions
-
+        
+        # Expand state if not visited
         if state not in visited:
             visited.add(state)
-            for next_state, action, step_cost in problem.getSuccessors(state):
+            for next_state, action, cost in problem.getSuccessors(state):
                 if next_state not in visited:
                     fringe.push((next_state, actions + [action]))
-
+                    
     return []
 
 def uniformCostSearch(problem: SearchProblem):
