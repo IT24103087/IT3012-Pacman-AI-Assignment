@@ -137,10 +137,36 @@ def breadthFirstSearch(problem):
                     
     return []
 
-def uniformCostSearch(problem: SearchProblem):
+def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # 1. PriorityQueue ordered by total accumulated cost g(n)
+    fringe = util.PriorityQueue()
+    
+    # 2. Push start state: (state, actions, current_cost) with priority 0
+    start_state = problem.getStartState()
+    fringe.push((start_state, [], 0), 0)
+    
+    # 3. Track visited states
+    visited = set()
+    
+    # 4. Explore until fringe is empty
+    while not fringe.isEmpty():
+        state, actions, current_cost = fringe.pop()
+        
+        # Goal check
+        if problem.isGoalState(state):
+            return actions
+        
+        # Expand only if not visited yet
+        if state not in visited:
+            visited.add(state)
+            
+            for next_state, action, step_cost in problem.getSuccessors(state):
+                if next_state not in visited:
+                    next_cost = current_cost + step_cost
+                    fringe.push((next_state, actions + [action], next_cost), next_cost)
+                    
+    return []
 
 def nullHeuristic(state, problem=None):
     """
@@ -149,10 +175,37 @@ def nullHeuristic(state, problem=None):
     """
     return 0
 
-def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
+def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # 1. PriorityQueue ordered by f(n) = g(n) + h(n)
+    fringe = util.PriorityQueue()
+    
+    # 2. Start state priority is g(start) + h(start) = 0 + h(start)
+    start_state = problem.getStartState()
+    fringe.push((start_state, [], 0), 0 + heuristic(start_state, problem))
+    
+    # 3. Track visited states
+    visited = set()
+    
+    # 4. Explore until fringe is empty
+    while not fringe.isEmpty():
+        state, actions, current_cost = fringe.pop()
+        
+        # Goal check
+        if problem.isGoalState(state):
+            return actions
+        
+        # Expand only if not yet visited
+        if state not in visited:
+            visited.add(state)
+            
+            for next_state, action, step_cost in problem.getSuccessors(state):
+                if next_state not in visited:
+                    next_cost = current_cost + step_cost
+                    priority = next_cost + heuristic(next_state, problem)
+                    fringe.push((next_state, actions + [action], next_cost), priority)
+                    
+    return []
 
 
 # Abbreviations
