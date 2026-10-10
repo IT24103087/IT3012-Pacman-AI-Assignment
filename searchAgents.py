@@ -169,49 +169,51 @@ class PositionSearchProblem(search.SearchProblem):
         self._visited, self._visitedlist, self._expanded = {}, [], 0 # DO NOT CHANGE
 
     def getStartState(self):
-        return self.startState
+        """
+        Returns the start state (in your search space,
+        not the full Pacman state space)
+        """
+        # Start state: (pacman_position, visited_corners_tuple)
+        # Initially, check if the start position itself is already on a corner
+        start_visited = []
+        for corner in self.corners:
+            start_visited.append(self.startingPosition == corner)
+        return (self.startingPosition, tuple(start_visited))
 
     def isGoalState(self, state):
-        isGoal = state == self.goal
-
-        # For display purposes only
-        if isGoal and self.visualize:
-            self._visitedlist.append(state)
-            import __main__
-            if '_display' in dir(__main__):
-                if 'drawExpandedCells' in dir(__main__._display): #@UndefinedVariable
-                    __main__._display.drawExpandedCells(self._visitedlist) #@UndefinedVariable
-
-        return isGoal
+        """
+        Returns whether this search state is a goal state of the problem.
+        """
+        # Goal is reached when all 4 corners have been visited
+        return all(state[1])
 
     def getSuccessors(self, state):
         """
         Returns successor states, the actions they require, and a cost of 1.
-
-         As noted in search.py:
-             For a given state, this should return a list of triples,
-         (successor, action, stepCost), where 'successor' is a
-         successor to the current state, 'action' is the action
-         required to get there, and 'stepCost' is the incremental
-         cost of expanding to that successor
         """
-
         successors = []
+        current_pos, visited_corners = state
+
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            x,y = state
+            # Add a direction vector to find child position
+            x, y = current_pos
             dx, dy = Actions.directionToVector(action)
-            nextx, nexty = int(x + dx), int(y + dy)
-            if not self.walls[nextx][nexty]:
-                nextState = (nextx, nexty)
-                cost = self.costFn(nextState)
-                successors.append( ( nextState, action, cost) )
+            next_x, next_y = int(x + dx), int(y + dy)
 
-        # Bookkeeping for display purposes
-        self._expanded += 1 # DO NOT CHANGE
-        if state not in self._visited:
-            self._visited[state] = True
-            self._visitedlist.append(state)
+            # Check for walls
+            if not self.walls[next_x][next_y]:
+                next_pos = (next_x, next_y)
+                
+                # Update which corners have been visited
+                next_visited = list(visited_corners)
+                for i, corner in enumerate(self.corners):
+                    if next_pos == corner:
+                        next_visited[i] = True
 
+                # Step cost is always 1 in this problem
+                successors.append(((next_pos, tuple(next_visited)), action, 1))
+
+        self._expanded += 1  # DO NOT CHANGE: autograder uses this for counting expansions
         return successors
 
     def getCostOfActions(self, actions):
