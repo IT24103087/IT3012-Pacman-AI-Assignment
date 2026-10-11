@@ -345,24 +345,37 @@ class CornersProblem(search.SearchProblem):
         return len(actions)
 
 
-def cornersHeuristic(state: Any, problem: CornersProblem):
+def cornersHeuristic(state, problem):
     """
-    A heuristic for the CornersProblem that you defined.
-
-      state:   The current search state
-               (a data structure you chose in your search problem)
-
-      problem: The CornersProblem instance for this layout.
-
-    This function should always return a number that is a lower bound on the
-    shortest path from the state to a goal of the problem; i.e.  it should be
-    admissible (as well as consistent).
+    An admissible and consistent heuristic for the CornersProblem.
+    Calculates the accumulated Manhattan distance visiting remaining corners.
     """
     corners = problem.corners # These are the corner coordinates
-    walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
+    walls = problem.walls     # These are the walls of the maze
 
-    "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    current_pos, visited_corners = state
+    
+    # List all corners that have not been visited yet
+    unvisited = [corners[i] for i in range(len(corners)) if not visited_corners[i]]
+    
+    if not unvisited:
+        return 0
+
+    total_heuristic = 0
+    curr = current_pos
+    remaining = list(unvisited)
+
+    # Greedily sum the Manhattan distance to the nearest remaining corner
+    while remaining:
+        # Find nearest remaining corner
+        distances = [(util.manhattanDistance(curr, target), target) for target in remaining]
+        min_dist, nearest_corner = min(distances, key=lambda x: x[0])
+        
+        total_heuristic += min_dist
+        curr = nearest_corner
+        remaining.remove(nearest_corner)
+
+    return total_heuristic
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
@@ -426,37 +439,27 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchFunction = lambda prob: search.aStarSearch(prob, foodHeuristic)
         self.searchType = FoodSearchProblem
 
-def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
+def foodHeuristic(state, problem):
     """
-    Your heuristic for the FoodSearchProblem goes here.
-
-    This heuristic must be consistent to ensure correctness.  First, try to come
-    up with an admissible heuristic; almost all admissible heuristics will be
-    consistent as well.
-
-    If using A* ever finds a solution that is worse uniform cost search finds,
-    your heuristic is *not* consistent, and probably not admissible!  On the
-    other hand, inadmissible or inconsistent heuristics may find optimal
-    solutions, so be careful.
-
-    The state is a tuple ( pacmanPosition, foodGrid ) where foodGrid is a Grid
-    (see game.py) of either True or False. You can call foodGrid.asList() to get
-    a list of food coordinates instead.
-
-    If you want access to info like walls, capsules, etc., you can query the
-    problem.  For example, problem.walls gives you a Grid of where the walls
-    are.
-
-    If you want to *store* information to be reused in other calls to the
-    heuristic, there is a dictionary called problem.heuristicInfo that you can
-    use. For example, if you only want to count the walls once and store that
-    value, try: problem.heuristicInfo['wallCount'] = problem.walls.count()
-    Subsequent calls to this heuristic can access
-    problem.heuristicInfo['wallCount']
+    An admissible and consistent heuristic for FoodSearchProblem.
+    Uses cached mazeDistance to find the furthest remaining food pellet.
     """
     position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+    foodList = foodGrid.asList()
+
+    # Base case: no food left to eat
+    if not foodList:
+        return 0
+
+    # Admissible lower bound: distance to the single furthest food dot
+    # mazeDistance takes walls into account and is already provided in searchAgents.py
+    max_distance = 0
+    for food in foodList:
+        dist = mazeDistance(position, food, problem.startingGameState)
+        if dist > max_distance:
+            max_distance = dist
+
+    return max_distance
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
